@@ -6,7 +6,7 @@ env:
     - NODE_INDEX=0 PY=2.7 CA=3.1.1.post3
     - NODE_INDEX=1 PY=2.7 CA=3.1.1.post3
     - NODE_INDEX=2 PY=2.7 CA=3.1.1.post3
-    - NODE_INDEX=3 PY=2.7 CA=3.1.1.post3 PIP_EXTRA=matplotlib2tikz==0.6.18
+    - NODE_INDEX=3 PY=2.7 CA=3.1.1.post3 PIP_EXTRA=tikzplotlib==0.9.6
     - NODE_INDEX=0 PY=3.7
     - NODE_INDEX=1 PY=3.7
     - NODE_INDEX=2 PY=3.7

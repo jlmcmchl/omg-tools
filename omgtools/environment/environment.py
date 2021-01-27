@@ -111,6 +111,7 @@ class Environment(OptiChild, PlotLayer):
                       np.ones(degree)]
         basis = BSplineBasis(knots, degree)
         for idx in range(vehicle.n_seg):
+            print('collision constraint segment', idx)
             # loop over vehicle segments, not over rooms since number of considered segments
             # may be different from total number of rooms
             room = self.room[idx]  # select current room
@@ -143,6 +144,7 @@ class Environment(OptiChild, PlotLayer):
                             hyp_veh[shape].append({'a': a, 'b': b})
                         hyp_obs[obstacle].append({'a': a, 'b': b})
                         obstacle.define_collision_constraints(hyp_obs[obstacle])
+            print('shapes done, onto collision')
             vehicle.define_collision_constraints(hyp_veh, room, splines[idx], horizon_times[idx])
 
     def define_intervehicle_collision_constraints(self, vehicles, horizon_times):

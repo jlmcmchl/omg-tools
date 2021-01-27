@@ -57,7 +57,9 @@ def create_nlp(var, par, obj, con, options, name=''):
     for key, value in slv_opt.items():
         opt[key] = value
     opt.update({'expand': True})
+    print('opt updated')
     solver = nlpsol('solver', options['solver'], nlp, opt)
+    print('solver created')
     name = 'nlp' if name == '' else 'nlp_' + name
     if codegen['build'] == 'jit':
         if options['verbose'] >= 1:
@@ -98,6 +100,7 @@ def create_nlp(var, par, obj, con, options, name=''):
         problem = solver
     else:
         raise ValueError('Invalid build option.')
+    print('nlpsol done.')
     t1 = time.time()
     if options['verbose'] >= 1:
         print('in %5f s' % (t1-t0))
@@ -179,12 +182,19 @@ class OptiFather(object):
 
     def construct_problem(self, options, name='', problem=None):
         self.compose_dictionary()
+        print('dictionary composed')
         self.translate_symbols()
+        print('symbols translated')
         variables = self.construct_variables()
+        print('variables constructed', variables)
         parameters = self.construct_parameters()
+        print('parameters constructed', parameters)
         self.construct_substitutes(variables, parameters)
+        print('substitutes constructed')
         constraints, _, _ = self.construct_constraints(variables, parameters)
+        print('constraints constructed')
         objective = self.construct_objective(variables, parameters)
+        print('objectives constructed')
         self.problem_description = {'var': variables, 'par': parameters,
                                     'obj': objective, 'con': constraints,
                                     'opt': options}
@@ -193,8 +203,11 @@ class OptiFather(object):
                 constraints, options, name)
         else:
             buildtime = 0.
+        print('nlp created')
         self.init_variables()
+        print('variables initialized')
         self.init_parameters()
+        print('parameters initialized')
         return problem, buildtime
 
     def compose_dictionary(self):
