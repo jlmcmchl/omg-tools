@@ -212,7 +212,7 @@ class DTModel(object):
 
     def turn_rad_per_sec_at_current_limit(self, ratio=None, in_od=None):
         v = self.imperial_v_at_current_limit(ratio, in_od)
-        return v * np.pi / self.track_width
+        return 2 * v / self.track_width
 
 
 

@@ -132,7 +132,7 @@ class Dubins(Vehicle):
         # constraint correlating max speed, ds, and dt
         # this is a hack for differential drive gdi
         if self.L is not None:
-            dtheta = 2*dtg_ha/(1.+tg_ha**2)
+            dtheta = 2*dtg_ha*((1.+tg_ha**2)**-1)
             v_s = v_til*(1+tg_ha**2)
             self.define_constraint(2*v_s + self.L * dtheta - 2 * self.vmax, -inf, 0)
             self.define_constraint(2*v_s - self.L * dtheta - 2 * self.vmax, -inf, 0)

@@ -183,9 +183,9 @@ def solve_for_time(model, ratio):
             "vmax": model.imperial_v_at_current_limit(ratio=ratio),
             "amax": model.max_accel(ratio=ratio),
             "amin": -model.max_accel(ratio=ratio),
-            "wmin": -2 * np.pi,
-            "wmax": 2 * np.pi,
-            "L": 2.0,
+            "wmin": -model.turn_rad_per_sec_at_current_limit(ratio=ratio),
+            "wmax": model.turn_rad_per_sec_at_current_limit(ratio=ratio),
+            "L": model.track_width,
         },
     )
     vehicle.define_knots(knot_intervals=15)
@@ -312,6 +312,7 @@ def solve_for_time(model, ratio):
     second_problem.plot("scene", knots=True, prediction=True)
 
     simulator.set_problem(second_problem)
+    # simulator = Simulator(second_problem)
     simulator.run_once()
 
     options["name"] = path + "_p2_" + str(ratio) + "_p2"
