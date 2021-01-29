@@ -18,7 +18,7 @@ setup(
     license='LGPLv3',
     keywords='optimization motion planning splines distributed multi-agent mpc',
     url='https://github.com/meco-group/omg-tools',
-    packages=find_packages(),
+    packages=find_packages(exclude=["frc2021"]),
     package_data={'omgtools.export': ['*/Makefile', '*/instructions.txt',
                                       '*.cpp', '*.hpp',
                                       '*/*.cpp', '*/*.hpp',

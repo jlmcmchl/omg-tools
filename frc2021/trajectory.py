@@ -51,7 +51,7 @@ a constraint is a dictionary of lambdas
 """
 
 
-def timeParameterizeTrajectory(poses, constraints, sv, ev, mv, ma, rev):
+def timeParameterizeTrajectory(poses, constraints, sv, ev, mv, ma, rev, dubins=False):
     constrainedStates = [
         {
             "pose": pose,
@@ -196,67 +196,120 @@ def timeParameterizeTrajectory(poses, constraints, sv, ev, mv, ma, rev):
 
         time += dt
 
-        states.append(
-            {
-                "time": time,
-                "distance": distance,
-                "velocity": -velocity if rev else velocity,
-                "accel": -accel if rev else accel,
-                "pose_time": state["pose"][0],
-                "pose_state_x": state["pose"][1],
-                "pose_state_y": state["pose"][2],
-                "pose_state_w": state["pose"][3],
-                "pose_input_v": state["pose"][4],
-                "pose_input_w": state["pose"][5],
-                "pose_acc": state["pose"][6],
-                "pose_pose_x": state["pose"][7],
-                "pose_pose_y": state["pose"][8],
-                "pose_pose_z": state["pose"][9],
-                "pose_splines_vtil": state["pose"][10],
-                "pose_splines_tg_ha": state["pose"][11],
-                "curv": state["curv"],
-            }
-        )
+        if dubins:
+            states.append(
+                {
+                    "time": time,
+                    "distance": distance,
+                    "velocity": -velocity if rev else velocity,
+                    "accel": -accel if rev else accel,
+                    "pose_time": state["pose"][0],
+                    "pose_state_x": state["pose"][1],
+                    "pose_state_y": state["pose"][2],
+                    "pose_state_w": state["pose"][3],
+                    "pose_input_v": state["pose"][4],
+                    "pose_input_w": state["pose"][5],
+                    "pose_acc": state["pose"][6],
+                    "pose_pose_x": state["pose"][7],
+                    "pose_pose_y": state["pose"][8],
+                    "pose_pose_z": state["pose"][9],
+                    "pose_splines_vtil": state["pose"][10],
+                    "pose_splines_tg_ha": state["pose"][11],
+                    "curv": state["curv"],
+                }
+            )
+        else:
+            states.append(
+                {
+                    "time": time,
+                    "distance": distance,
+                    "velocity": -velocity if rev else velocity,
+                    "accel": -accel if rev else accel,
+                    "pose_time": state['pose'][0],
+                    "pose_state_x": state['pose'][1],
+                    "pose_state_y": state['pose'][2],
+                    "pose_input_x": state['pose'][3],
+                    "pose_input_y": state['pose'][4],
+                    "pose_dinput_x": state['pose'][5],
+                    "pose_dinput_y": state['pose'][6],
+                    "pose_v_tot": state['pose'][7],
+                    "pose_pose_x": state['pose'][8],
+                    "pose_pose_y": state['pose'][9],
+                    "pose_pose_z": state['pose'][10],
+                    "pose_splines_x": state['pose'][11],
+                    "pose_splines_y": state['pose'][12],
+                    "curv": state["curv"],
+                }
+            )
     print("finished integration")
 
     return states
 
+DUBINS_HEADER = [
+    "time",
+    "distance",
+    "velocity",
+    "accel",
+    "pose_time",
+    "pose_state_x",
+    "pose_state_y",
+    "pose_state_w",
+    "pose_input_v",
+    "pose_input_w",
+    "pose_acc",
+    "pose_pose_x",
+    "pose_pose_y",
+    "pose_pose_z",
+    "pose_splines_vtil",
+    "pose_splines_tg_ha",
+    "curv",
+]
+
+HOLONOMIC_HEADER = [
+    "time",
+    "distance",
+    "velocity",
+    "accel",
+    "pose_time",
+    "pose_state_x",
+    "pose_state_y",
+    "pose_input_x",
+    "pose_input_y",
+    "pose_dinput_x",
+    "pose_dinput_y",
+    "pose_v_tot",
+    "pose_pose_x",
+    "pose_pose_y",
+    "pose_pose_z",
+    "pose_splines_x",
+    "pose_splines_y",
+    "curv",
+]
 
 if __name__ == "__main__":
     import sys
     import csv
 
-    with open(sys.argv[1]) as f:
+    if sys.argv[1].lower() in ('dubins', 'holonomic'):
+        dubins = sys.argv[1].lower() == 'dubins'
+    else:
+        print('Usage: trajectory.py [dubins|holonomic] <input file> <output file> <max velocity> <max acceleration>')
+        sys.exit(0)
+
+
+    with open(sys.argv[2]) as f:
         rdr = csv.reader(f)
         rdr.__next__()
         lines = [[float(i) for i in line] for line in rdr]
 
     traj = timeParameterizeTrajectory(
-        lines, [], 0, 0, float(sys.argv[3]), float(sys.argv[4]), False
+        lines, [], 0, 0, float(sys.argv[4]), float(sys.argv[5]), False, dubins
     )
 
-    with open(sys.argv[2], "w") as f:
+    with open(sys.argv[3], "w") as f:
         wrtr = csv.DictWriter(
             f,
-            [
-                "time",
-                "distance",
-                "velocity",
-                "accel",
-                "pose_time",
-                "pose_state_x",
-                "pose_state_y",
-                "pose_state_w",
-                "pose_input_v",
-                "pose_input_w",
-                "pose_acc",
-                "pose_pose_x",
-                "pose_pose_y",
-                "pose_pose_z",
-                "pose_splines_vtil",
-                "pose_splines_tg_ha",
-                "curv",
-            ],
+            DUBINS_HEADER if dubins else HOLONOMIC_HEADER,
         )
         wrtr.writeheader()
         wrtr.writerows(traj)

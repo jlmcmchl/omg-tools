@@ -28,3 +28,5 @@ omg_tools.egg-info/*
 lvd/*
 *.sublime-project
 *.sublime-workspace
+
+optimization/*

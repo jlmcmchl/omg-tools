@@ -131,12 +131,8 @@ configs = {
         ],
     },
     "Bounce": {
-        "path": ["A6", "A9"],
+        "path": [[15.0, 11.5], [22.5, 11.5]],
         "markers": [
-            Obstacle(
-                {"position": coord_to_pair("A1")},
-                shape=Rectangle(width=5, height=5),
-            ),
             Obstacle(
                 {"position": coord_to_pair("A4.5")},
                 shape=Rectangle(width=2.5, height=5),
@@ -146,26 +142,12 @@ configs = {
                 shape=Rectangle(width=2.5, height=10),
             ),
             Obstacle(
-                {"position": coord_to_pair("A11")},
-                shape=Rectangle(width=5, height=5),
-            ),
-            Obstacle(
                 {"position": coord_to_pair("C5")},
                 shape=Rectangle(width=2.5 / 12, height=5),
             ),
-            Obstacle(
-                {"position": coord_to_pair("E11")},
-                shape=Rectangle(width=5, height=5),
-            ),
-            Obstacle(
-                {"position": coord_to_pair("E1.5")},
-                shape=Rectangle(width=7.5, height=5),
-            ),
         ],
         "rooms": [
-            ["Z5", "D7"],
-            ["B5", "F10"],
-            ["Z8", "D10"],
+            ["Z5", "F10"],
         ],
     },
 }

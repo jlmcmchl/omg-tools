@@ -156,31 +156,44 @@ configs = {
 }
 
 # Create the vehicle instance
-vehicle = Holonomic(
-    shapes=Square(2),
+# vehicle = Holonomic(
+#     shapes=Square(2),
+#     options={
+#         "safety_distance": 0.0,
+#         "safety_weight": 1.0,
+#         "room_constraints": True,
+#         "ideal_prediction": False,
+#         "ideal_update": False,
+#         "1storder_delay": False,
+#         "time_constant": 0.1,
+#         "input_disturbance": None,
+#         "stop_tol": 1.0e-2,
+#         "syslimit": "norm_2",
+#     },
+#     bounds={"vmax": 18, "vmin": -18, "amax": 54, "amin": -54},
+# )
+
+vehicle = Dubins(
+    shapes=Circle(sqrt(2)),
     options={
-        "syslimit": "norm_2",
-        "safety_distance": 0.2,
-        "stop_tol": 1.0e-2,
+        "safety_distance": 0.0,
         "safety_weight": 10.0,
         "room_constraints": True,
-        "ideal_prediction": False,
-        "ideal_update": False,
+        "ideal_prediction": True,
+        "ideal_update": True,
         "1storder_delay": False,
-        "time_constant": 0.01,
+        "time_constant": 0.1,
         "input_disturbance": None,
+        "stop_tol": 1.0e-2,
+        "substitution": False,
+        "exact_substitution": False,
     },
-    bounds={"vmax": 18, "vmin": -18, "amax": 54, "amin": -54},
+    bounds={"vmax": 16, "amax": 54, "amin": -54, "wmin": -2 * np.pi, "wmax": 2 * np.pi},
 )
 
 # We provide our vehicle with a desired initial and terminal position:
 
-# this specific impl is for Barrel Racing
-
-path = "Slalom" if len(sys.argv) == 1 else sys.argv[1]
-
-if path == "Bounce":
-    raise Exception("This file is not meant for Bounce Paths. Please use the autonav_bounce_p#.py files for Bounce")
+path = "Slalom"
 
 rooms = [coords_to_bounding_box(*pair) for pair in configs[path]["rooms"]]
 
@@ -201,18 +214,22 @@ for marker in configs[path]["markers"]:
         )
     else:
         environment.add_obstacle(marker)
+environment.init()
 
 end = 1
-vehicle.set_initial_conditions(coord_to_pair(configs[path]["path"][end - 1]))
-vehicle.set_terminal_conditions(coord_to_pair(configs[path]["path"][end]))
+# vehicle.set_initial_conditions(coord_to_pair(configs[path]["path"][end - 1]), [0,0])
+# vehicle.set_terminal_conditions(coord_to_pair(configs[path]["path"][end]))
+vehicle.set_initial_conditions([*coord_to_pair(configs[path]["path"][end - 1]), 0])
+vehicle.set_terminal_conditions([*coord_to_pair(configs[path]["path"][end]), np.pi / 2])
 
 print("Environment Setup.")
 
-
+# do our special bounce shit
 problem = MultiFrameProblem(
     vehicle,
     environment,
-    n_frames=len(configs[path]["rooms"]),
+    # n_frames - only applicable to MultiFrameProblem
+    len(rooms),
     options={
         "verbose": 2,
         "solver": "ipopt",
@@ -222,13 +239,22 @@ problem = MultiFrameProblem(
                 "ipopt.warm_start_init_point": "yes",
                 "ipopt.print_level": 0,
                 "print_time": 0,
-                "ipopt.fixed_variable_treatment": "make_constraint",
+                "ipopt.fixed_variable_treatment": "make_parameter",
             }
         },
-        "codegen": {"build": "shared", "flags": "-O2"},
+        "codegen": {"build": "shared", "flags": "-O0"},
+        # only applicable to Point2Point
+        "inter_vehicle_avoidance": False,
+        "horizon_time": 10,
+        "hard_term_con": False,
+        "no_term_con_der": False,
     },
+    # only applicable to Point2Point
+    # freeT=True,
 )
-problem.init()
+problem.init(path)
+
+# vehicle.problem = problem
 
 print("Problem Initialized.")
 
@@ -237,32 +263,30 @@ simulator = Simulator(problem)
 
 # define what you want to plot
 problem.plot("scene", knots=True, prediction=True)
-vehicle.plot("state", knots=True, prediction=True, labels=["x (m)", "y (m)"])
-vehicle.plot("input", knots=True, prediction=True, labels=["v_x (m/s)", "v_y (m/s)"])
-vehicle.plot(
-    "dinput", knots=True, prediction=True, labels=["a_x (m/s/s)", "a_y (m/s/s)"]
-)
+vehicle.plot("state", knots=True, prediction=True)
+vehicle.plot("input", knots=True, prediction=True)
+# vehicle.plot(
+#     "dinput", knots=True, prediction=True, labels=["a_s (m/s/s)", "a_r (rad/s/s)"]
+# )
 
 print("Simulator Setup.")
 
 options = {}
 options["directory"] = os.path.join(os.getcwd(), "export_f/")
-# path to object files of your exported optimization problem
-options["casadiobj"] = os.path.join(options["directory"], "bin/")
-options["namespace"] = "omgf"
 options["name"] = path
-
 
 simulator.run_once()
 
-save(vehicle.traj_storage, vehicle.signals, options)
+print("Sim Complete. Saving")
 
+save(vehicle.traj_storage, vehicle.signals, options)
+#
 problem.plot_movie("scene", number_of_frames=200, repeat=False)
-problem.save_movie(
-    "scene",
-    format="gif",
-    name=path,
-    number_of_frames=200,
-    movie_time=10,
-    axis=False,
-)
+# problem.save_movie(
+#     "scene",
+#     format="gif",
+#     name="bounce_p1",
+#     number_of_frames=200,
+#     movie_time=10,
+#     axis=False,
+# )
