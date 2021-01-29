@@ -56,9 +56,10 @@ class Dubins(Vehicle):
             self, n_spl=2, degree=degree, shapes=shapes, options=options)
         self.vmax = bounds['vmax'] if 'vmax' in bounds else 0.5
         self.amax = bounds['amax'] if 'amax' in bounds else 1.
-        # self.amin = bounds['amin'] if 'amin' in bounds else -1.
+        self.amin = bounds['amin'] if 'amin' in bounds else -1.
         self.wmin = bounds['wmin'] if 'wmin' in bounds else -np.pi/6. # in rad/s
         self.wmax = bounds['wmax'] if 'wmax' in bounds else np.pi/6.
+        self.L = bounds['L'] if 'L' in bounds else None
 
     def set_default_options(self):
         Vehicle.set_default_options(self)
@@ -75,6 +76,7 @@ class Dubins(Vehicle):
             horizon_time = self.define_symbol('T')  # motion time
         v_til, tg_ha = splines
         dv_til, dtg_ha = v_til.derivative(), tg_ha.derivative()
+
         # velocity constraint
         self.define_constraint(
             v_til*(1+tg_ha**2) - self.vmax, -inf, 0.)
@@ -83,10 +85,10 @@ class Dubins(Vehicle):
         self.define_constraint(-v_til, -inf, 0)  # only forward driving, positive v_tilde
 
         # acceleration constraint
-        # self.define_constraint(
-        #     dv_til*(1+tg_ha**2) + 2*v_til*tg_ha*dtg_ha - horizon_time*self.amax, -inf, 0.)
-        # self.define_constraint(
-        #     -dv_til*(1+tg_ha**2) - 2*v_til*tg_ha*dtg_ha + horizon_time*self.amin, -inf, 0.)
+        self.define_constraint(
+            dv_til*(1+tg_ha**2) + 2*v_til*tg_ha*dtg_ha - horizon_time*self.amax, -inf, 0.)
+        self.define_constraint(
+            -dv_til*(1+tg_ha**2) - 2*v_til*tg_ha*dtg_ha + horizon_time*self.amin, -inf, 0.)
 
 
         if self.options['substitution']:
@@ -126,6 +128,14 @@ class Dubins(Vehicle):
         # add constraints on change in orientation
         self.define_constraint(2*dtg_ha - (1+tg_ha**2)*horizon_time*self.wmax, -inf, 0.)
         self.define_constraint(-2*dtg_ha + (1+tg_ha**2)*horizon_time*self.wmin, -inf, 0.)
+
+        # constraint correlating max speed, ds, and dt
+        # this is a hack for differential drive gdi
+        if self.L is not None:
+            dtheta = 2*dtg_ha/(1.+tg_ha**2)
+            v_s = v_til*(1+tg_ha**2)
+            self.define_constraint(2*v_s + self.L * dtheta - 2 * self.vmax, -inf, 0)
+            self.define_constraint(2*v_s - self.L * dtheta - 2 * self.vmax, -inf, 0)
 
 
     def get_fleet_center(self, splines, rel_pos, substitute=True):

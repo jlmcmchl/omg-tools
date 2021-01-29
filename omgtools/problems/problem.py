@@ -82,12 +82,12 @@ class Problem(OptiChild, PlotLayer):
         for vehicle in self.vehicles:
             vehicle.init()
 
-    def init(self):
+    def init(self, name=''):
         self.father.reset()
         print('father reset')
         self.construct()
         print('constructed')
-        self.problem, buildtime = self.father.construct_problem(self.options)
+        self.problem, buildtime = self.father.construct_problem(self.options, name=name)
         print('father constructed problem')
         self.father.init_transformations(self.init_primal_transform,
                                          self.init_dual_transform)
